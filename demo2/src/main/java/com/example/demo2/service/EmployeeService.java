@@ -10,7 +10,6 @@ import com.example.demo2.dao.EmployeeDAO;
 import com.example.demo2.dto.EmployeeDTO;
 import com.example.demo2.repository.EmployeeRepository;
 import com.example.demo2.util.ServiceUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -19,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -94,8 +92,7 @@ public class EmployeeService {
 
         EmployeeDTO.Response response = new EmployeeDTO.Response();
         SimpleDateFormat transFormat = new SimpleDateFormat("yyyy-MM-dd");
-        Map<String, Object> map = null;
-        JSONObject json = null;
+        JSONObject jsonObject = null;
 
         // request에서 id를 가지고와서 employee table에서 데이터를 조회한다.
         try {
@@ -104,37 +101,25 @@ public class EmployeeService {
             logger.info("=====================> [EmployeeService / getEmployeeInfo] dao : " + dao);
 
             // flask getMethod Call
-            // detail을 arg로 넣어서 flask Method를 태운다.
             String baseURL = "http://" + ServiceUtil.FLASK_URI + "/" + ServiceUtil.FLASK_GET_SERVICE + "?employee_number=" + dao.getEmployee_number();
-            logger.info("=====================> [EmployeeService / getEmployeeInfo] baseURL : " + baseURL);
-            ResponseEntity<String> flaskResponse = restTemplate.getForEntity(
-                baseURL, String.class);  
-            
-            
-            if(flaskResponse != null && flaskResponse.getBody() != null) {
-                logger.info(
-                        "========================== > ㄸ로로롱 ");
-                // From String to JSONOBject
-                JSONParser jsonParser = new JSONParser();
-                json = (JSONObject)jsonParser.parse(flaskResponse.getBody());
-            }
+            jsonObject = getFlaskService(baseURL);
             
             // flaskResponse의 resultCode가 200일 때 
-            if("200".equals(json.get("resultCode").toString())) {   
+            if("200".equals(jsonObject.get("resultCode").toString())) {   
                 logger.info("================================================================== 200");
                 response.setId(dao.getId());
                 response.setName(dao.getName());
                 response.setEmployee_number(String.valueOf(dao.getEmployee_number()));
                 if(dao.getSign_up_date() != null) response.setSign_up_date(transFormat.format(dao.getSign_up_date()));
                 response.setPosition(dao.getPosition());
-                response.setAddress((String)json.get("addres"));
-                response.setEmail((String)json.get("email"));
-                response.setAge(Integer.valueOf(json.get("age").toString()));
-                response.setPhoneNum((String)json.get("phoneNum"));
-                response.setMemo((String)json.get("memo"));
+                response.setAddress((String)jsonObject.get("address"));
+                response.setEmail((String)jsonObject.get("email"));
+                response.setAge(Integer.valueOf(jsonObject.get("age").toString()));
+                response.setPhoneNum((String)jsonObject.get("phoneNum"));
+                response.setMemo((String)jsonObject.get("memo"));
             } 
             // flaskResponse의 resultCode가 200일 때 
-            else if("500".equals(json.get("resultCode"))) {
+            else if("500".equals(jsonObject.get("resultCode"))) {
                 response.setResultCode("500");
             }
         
@@ -161,30 +146,26 @@ public class EmployeeService {
        // employee table insert
        // 단순 demo용이기 때문에 방어로직은 생략
        EmployeeDTO.Response response = new EmployeeDTO.Response();
+       JSONObject jsonObject = null;
        
        try {
             // employee table에 merge
             EmployeeDAO dao = new EmployeeDAO();
             parsingDTO(request, dao);
-            repository.save(dao);
-            Map<String, Object> detailMap = new HashMap<>();
 
-            logger.info("====================> [EmployeeService / insertEmployeeInfo] jsonObject");
-            // for(String key : jsonObject.keySet()) {
-            //     logger.info("                   key( "+ key + " ) : value( " + jsonObject.get(key) + " )");
-            // }
-
+            //cudFlag에 따라 Updte, Insert
+            if("C".equals(request.getCudFlag())) {
+                repository.save(dao);
+            }else if("U".equals(request.getCudFlag())) {
+                repository.update(dao);
+            }
             
+            logger.info("====================> [EmployeeService / insertEmployeeInfo] jsonObject");
 
-            // TODO Auto-generated method stub
-            // MultiValueMap<String, String> headers = new LinkedMultiValueMap<String, String>();
-            // Map map = new HashMap<String, String>();
-            // map.put("Content-Type", "application/json");
-            // headers.setAll(map);
+            // Flask Post Call
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            
             Map<String, Object> req_payload = new HashMap<>();
             req_payload.put("cudFlag", request.getCudFlag());
             req_payload.put("id", request.getId());
@@ -198,17 +179,10 @@ public class EmployeeService {
             HttpEntity<?> requestEntity = new HttpEntity<>(req_payload, headers);
 
             // detail을 arg로 넣어서 flask Method를 태운다.
-            ResponseEntity<String> flaskResponse = restTemplate.postForEntity(
-                "http://" + ServiceUtil.FLASK_URI + "/" + ServiceUtil.FLASK_POST_SERVICE, requestEntity, String.class);  
-                
-            logger.info(
-                    "========================== > flaskResponse : " + flaskResponse.getBody());
+            String baseURL = "http://" + ServiceUtil.FLASK_URI + "/" + ServiceUtil.FLASK_POST_SERVICE;
+            jsonObject = postFlaskService(baseURL, requestEntity);
 
-            // From String to JSONOBject
-            JSONParser jsonParser = new JSONParser();
-            JSONObject json = (JSONObject)jsonParser.parse(flaskResponse.getBody());
-
-            if(flaskResponse != null && flaskResponse.getBody() != null) response.setResultCode((String)json.get("resultCode"));
+            if(jsonObject != null) response.setResultCode(String.valueOf(jsonObject.get("resultCode")));
             
 
        }catch(Exception e) {
@@ -230,19 +204,19 @@ public class EmployeeService {
      *              employee table과 employe_detail(flask) 에 데이터를 모두 Delete합니다.
      */
     public EmployeeDTO.Response deleteEmployeeInfo(EmployeeDTO.Request request) throws Exception{
-
         // employee table delete
         EmployeeDTO.Response response = new EmployeeDTO.Response();
+        JSONObject jsonObject = null;
         try {
             // employee table에서 데이터를 삭제하는 로직
             EmployeeDAO dao = new EmployeeDAO();
             parsingDTO(request, dao);
-            repository.delete(dao);
+            repository.deleteEmp(dao);
 
+            // flask post call
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            
             Map<String, Object> req_payload = new HashMap<>();
             req_payload.put("cudFlag", request.getCudFlag());
             req_payload.put("employee_number", request.getEmployee_number());
@@ -250,16 +224,10 @@ public class EmployeeService {
             HttpEntity<?> requestEntity = new HttpEntity<>(req_payload, headers);
             
             // detail을 arg로 넣어서 flask Method를 태운다.
-            ResponseEntity<String> flaskResponse = restTemplate.postForEntity(
-                "http://" + ServiceUtil.FLASK_URI + "/" + ServiceUtil.FLASK_POST_SERVICE, requestEntity, String.class);  
-            logger.info(
-                    "========================== > flaskResponse : " + flaskResponse.getBody());
+            String baseURL = "http://" + ServiceUtil.FLASK_URI + "/" + ServiceUtil.FLASK_POST_SERVICE;
+            jsonObject = postFlaskService(baseURL, requestEntity);
 
-            // From String to JSONOBject        
-            JSONParser jsonParser = new JSONParser();
-            JSONObject json = (JSONObject)jsonParser.parse(flaskResponse.getBody());
-
-            if(flaskResponse != null && flaskResponse.getBody() != null) response.setResultCode((String)json.get("resultCode"));
+            if(jsonObject != null) response.setResultCode(String.valueOf(jsonObject.get("resultCode")));
 
         }catch(Exception e) {
             e.printStackTrace();
@@ -317,8 +285,23 @@ public class EmployeeService {
      * @throws      Exception
      * @description DTO를 parsing하는 Method입니다.
      */
-    public JSONObject getFlaskService() throws Exception {
-        return new JSONObject();
+    public JSONObject getFlaskService(String baseURL) throws Exception {
+        logger.info(
+                "=====================> [EmployeeService / getFlaskService] baseURL : " + baseURL);
+        
+        JSONObject jsonObject = null;
+        ResponseEntity<String> flaskResponse = restTemplate.getForEntity(
+            baseURL, String.class);  
+        
+        if(flaskResponse != null && flaskResponse.getBody() != null) {
+            logger.info(
+                    "=====================> [EmployeeService / getFlaskService] flaskResponse :" + flaskResponse.getBody());
+            // From String to JSONOBject
+            JSONParser jsonParser = new JSONParser();
+            String jsonString = String.valueOf(flaskResponse.getBody());
+            jsonObject = (JSONObject)jsonParser.parse(jsonString);
+        }
+        return jsonObject;
     }
 
 
@@ -329,7 +312,21 @@ public class EmployeeService {
      * @throws      Exception
      * @description DTO를 parsing하는 Method입니다.
      */
-    public JSONObject postFlaskService(EmployeeDTO.Detail detail) throws Exception {
-        return new JSONObject();
+    public JSONObject postFlaskService(String baseURL, HttpEntity<?> requestEntity) throws Exception {
+        logger.info(
+                "=====================> [EmployeeService / getFlaskService] baseURL : " + baseURL);
+        
+        JSONObject jsonObject = null;
+        ResponseEntity<String> flaskResponse = restTemplate.postForEntity(
+            baseURL, requestEntity, String.class);  
+            
+        logger.info(
+                "=====================> [EmployeeService / postFlaskService] flaskResponse :" + flaskResponse.getBody());
+
+        // From String to JSONOBject
+        JSONParser jsonParser = new JSONParser();
+        String jsonString = String.valueOf(flaskResponse.getBody());
+        jsonObject = (JSONObject)jsonParser.parse(jsonString);
+        return jsonObject;
     }
 }

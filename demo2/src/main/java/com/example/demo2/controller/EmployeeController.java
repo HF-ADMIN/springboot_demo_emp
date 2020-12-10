@@ -2,6 +2,7 @@ package com.example.demo2.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -19,6 +20,7 @@ import com.example.demo2.service.EmployeeService;
  *              GET Method와 POST Method를 가지고 있습니다.
  */
 
+@CrossOrigin(origins="*")
 @RestController
 public class EmployeeController{
     Logger logger = LoggerFactory.getLogger(EmployeeController.class);
