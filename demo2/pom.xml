@@ -81,11 +81,6 @@
 			<artifactId>spring-boot-starter-amqp</artifactId> 
 			<version>2.2.8.RELEASE</version>
 		</dependency>
-		<!--dependency>
-			<groupId>io.opentracing.contrib</groupId>
-			<artifactId>opentracing-spring-jaeger-web-starter</artifactId>
-			<version>1.0.3</version>
-		</dependency-->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
@@ -102,11 +97,23 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-aop</artifactId>
 		</dependency>
+
+		<!-- Jaeger Opentracing dependencies -->
 		<!--dependency>
 			<groupId>com.uber.jaeger</groupId>
 			<artifactId>jaeger-core</artifactId>
 			<version>0.18.0</version>
 		</dependency-->
+		<dependency>
+			<groupId>io.opentracing.contrib</groupId>
+			<artifactId>opentracing-spring-jaeger-web-starter</artifactId>
+			<version>3.1.2</version>
+		</dependency>
+		<dependency>
+			<groupId>io.opentracing.contrib</groupId>
+			<artifactId>opentracing-spring-cloud-starter</artifactId>
+			<version>0.5.5</version>
+		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.json/json -->
 		<dependency>

@@ -1,7 +1,5 @@
 package com.example.demo2.repository;
 
-import java.util.Date;
-
 import com.example.demo2.dao.EmployeeDAO;
 
 import org.springframework.data.jpa.repository.JpaRepository;

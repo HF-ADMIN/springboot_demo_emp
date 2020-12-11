@@ -1,4 +1,4 @@
-package com.example.demo2;
+package com.example.demo2.config;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -13,6 +13,7 @@ public class RestTemplateConfig {
 
  	/**
 	 * @methodName restTemplate
+     * @param      RestTemplateBuilder restTemplateBuilder
 	 * @return     org.springframework.web.client.RestTemplate
 	 * @decription org.springframework.web.client.RestTemplate 를 정의하고 Bean 등록.
 	 *             Timeout, Client Connection Config  등을 정의

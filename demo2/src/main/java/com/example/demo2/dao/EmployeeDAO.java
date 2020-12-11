@@ -19,9 +19,9 @@ import lombok.Setter;
 @AllArgsConstructor
 @Entity
 @Table(name="employee")
-public class EmployeeDAO { 
+public class EmployeeDAO {  
     @Id
-    @Column(name="id", nullable=false)   
+    @Column(name="id", nullable=false)
     @GeneratedValue
     private Integer id;
 
