@@ -81,12 +81,12 @@ public class SpanAspect {
         */
         
         Span parentSpan = tracer.scopeManager().activeSpan();
-        Span spanPhase1 = tracer.buildSpan(pjp.getSignature().getName()).asChildOf(parentSpan).start();
-        spanPhase1.log("                                                SpanPhase1 log");
+        Span AOPSpan = tracer.buildSpan(pjp.getSignature().getName()).asChildOf(parentSpan).start();
+        AOPSpan.log("                                                AOPSpan span log");
         Object result = pjp.proceed();
-        spanPhase1.finish();
+        AOPSpan.finish();
         
-        logger.info("[                             spanLogging End                                ]");
+        logger.info("[                             AOPSpan End                                ]");
         return result;
     }
 

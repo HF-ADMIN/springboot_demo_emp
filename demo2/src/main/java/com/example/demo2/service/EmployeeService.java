@@ -27,6 +27,10 @@ import org.springframework.web.client.RestTemplate;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
+import io.opentracing.contrib.spring.cloud.websocket.TextMapExtractAdapter;
+import io.opentracing.propagation.Format;
+import io.opentracing.propagation.TextMap;
+import io.opentracing.propagation.TextMapAdapter;
 
 /**
  * @className   EmployeeService
@@ -104,15 +108,30 @@ public class EmployeeService {
         EmployeeDTO.Response response = new EmployeeDTO.Response();
         SimpleDateFormat transFormat = new SimpleDateFormat("yyyy-MM-dd");
         JSONObject jsonObject = null;
-        Span parentSpan = null;
+        // Span parentSpan = null;
         Span spanPhase2 = null;
         String baseURL = null;
+        final Map<String, String> headers = new HashMap<String, String>();
+        // headers = requestHeader.toSingleValueMap()
 
         // request에서 id를 가지고와서 employee table에서 데이터를 조회한다.
         try {
-            parentSpan = tracer.scopeManager().activeSpan();
-            spanPhase2 = tracer.buildSpan("spanPhase_2").asChildOf(parentSpan).start();
-            spanPhase2.log("                                                spanPhase2 log");
+            for(String key : requestHeader.keySet()) {
+                logger.info("++++++++++++++++++++++++++++++++++++++++++ key( " + key + " ) : value( " + requestHeader.get(key).get(0) + " )");
+                headers.put(key, requestHeader.get(key).get(0));
+            }
+            TextMap httpHeadersCarrier = new TextMapAdapter(headers);
+            SpanContext parentSpan = tracer.extract(Format.Builtin.HTTP_HEADERS, httpHeadersCarrier);
+            logger.info("=====================> [EmployeeService / getEmployeeInfo] extract : " + parentSpan);
+            if(parentSpan == null) {
+                spanPhase2 = tracer.buildSpan("spanPhase_2").start();
+            } else {
+                spanPhase2 = tracer.buildSpan("spanPhase_2").asChildOf(parentSpan).start();
+            }
+
+            // parentSpan = tracer.scopeManager().activeSpan();
+            // spanPhase2 = tracer.buildSpan("spanPhase_2").asChildOf(spanContext).start();
+            spanPhase2.log("                                                spanPhase2 span log");
             EmployeeDAO dao =  repository.findById(id);
 
             logger.info("=====================> [EmployeeService / getEmployeeInfo] dao : " + dao);

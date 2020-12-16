@@ -66,7 +66,7 @@ public class EmployeeController{
         try {
             parentSpan = tracer.scopeManager().activeSpan();
             spanPhase1 = tracer.buildSpan("spanPhase_1").asChildOf(parentSpan).start();
-            spanPhase1.log("                                                SpanPhase1 log");
+            spanPhase1.log("                                                SpanPhase1 span log");
             responseBody = service.getEmployeeInfo(requestHeader, id);
         }catch(Exception e) {
             throw e;

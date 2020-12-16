@@ -20,7 +20,7 @@ import lombok.Setter;
 @Entity
 @Table(name="employee")
 public class EmployeeDAO {  
-    @Id
+    @Id 
     @Column(name="id", nullable=false)
     @GeneratedValue
     private Integer id;

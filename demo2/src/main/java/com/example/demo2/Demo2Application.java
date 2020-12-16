@@ -23,7 +23,7 @@ public class Demo2Application {
 	 *             SamplerConfigration, ReporterConfiguration, ServiceName 을 정의
 	 */
 	@Bean
-	public io.opentracing.Tracer jaegerTracer() {
+	public io.opentracing.Tracer tracer() {
 		SamplerConfiguration samplerConfig = new SamplerConfiguration().withType("const").withParam(1);
 		ReporterConfiguration reporterConfig = ReporterConfiguration.fromEnv().withLogSpans(true);
 		return Configuration.fromEnv(env.getProperty("opentracing.jaeger.service-name")).withSampler(samplerConfig).withReporter(reporterConfig).getTracer();
