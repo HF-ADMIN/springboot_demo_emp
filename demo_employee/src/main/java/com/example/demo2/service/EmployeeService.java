@@ -109,29 +109,30 @@ public class EmployeeService {
         SimpleDateFormat transFormat = new SimpleDateFormat("yyyy-MM-dd");
         JSONObject jsonObject = null;
         // Span parentSpan = null;
-        Span spanPhase2 = null;
+        // Span spanPhase2 = null;
         String baseURL = null;
         final Map<String, String> headers = new HashMap<String, String>();
         // headers = requestHeader.toSingleValueMap()
 
         // request에서 id를 가지고와서 employee table에서 데이터를 조회한다.
         try {
+            // header data propagation
             for(String key : requestHeader.keySet()) {
                 logger.info("++++++++++++++++++++++++++++++++++++++++++ key( " + key + " ) : value( " + requestHeader.get(key).get(0) + " )");
                 headers.put(key, requestHeader.get(key).get(0));
             }
-            TextMap httpHeadersCarrier = new TextMapAdapter(headers);
-            SpanContext parentSpan = tracer.extract(Format.Builtin.HTTP_HEADERS, httpHeadersCarrier);
-            logger.info("=====================> [EmployeeService / getEmployeeInfo] extract : " + parentSpan);
-            if(parentSpan == null) {
-                spanPhase2 = tracer.buildSpan("spanPhase_2").start();
-            } else {
-                spanPhase2 = tracer.buildSpan("spanPhase_2").asChildOf(parentSpan).start();
-            }
+            // TextMap httpHeadersCarrier = new TextMapAdapter(headers);
+            // SpanContext parentSpan = tracer.extract(Format.Builtin.HTTP_HEADERS, httpHeadersCarrier);
+            // logger.info("=====================> [EmployeeService / getEmployeeInfo] extract : " + parentSpan);
+            // if(parentSpan == null) {
+            //     spanPhase2 = tracer.buildSpan("spanPhase_2").start();
+            // } else {
+            //     spanPhase2 = tracer.buildSpan("spanPhase_2").asChildOf(parentSpan).start();
+            // }
 
             // parentSpan = tracer.scopeManager().activeSpan();
             // spanPhase2 = tracer.buildSpan("spanPhase_2").asChildOf(spanContext).start();
-            spanPhase2.log("                                                spanPhase2 span log");
+            // spanPhase2.log("                                                spanPhase2 span log");
             EmployeeDAO dao =  repository.findById(id);
 
             logger.info("=====================> [EmployeeService / getEmployeeInfo] dao : " + dao);
@@ -163,11 +164,15 @@ public class EmployeeService {
                     response.setEmployee_number(String.valueOf(dao.getEmployee_number()));
                     if(dao.getSign_up_date() != null) response.setSign_up_date(transFormat.format(dao.getSign_up_date()));
                     response.setPosition(dao.getPosition());
-                    response.setAddress((String)jsonObject.get("address"));
-                    response.setEmail((String)jsonObject.get("email"));
-                    response.setAge(Integer.valueOf(jsonObject.get("age").toString()));
-                    response.setPhoneNum((String)jsonObject.get("phoneNum"));
-                    response.setMemo((String)jsonObject.get("memo"));
+                    
+                    // Employee Detail Service에서 Data가 없을 경우, 예외처리
+                    if(!"No Data".equals(jsonObject.get("returnMessage")) && "200".equals(jsonObject.get("resultCode"))) {
+                        response.setAddress((String)jsonObject.get("address"));
+                        response.setEmail((String)jsonObject.get("email"));
+                        response.setAge(Integer.valueOf(jsonObject.get("age").toString()));
+                        response.setPhoneNum((String)jsonObject.get("phoneNum"));
+                        response.setMemo((String)jsonObject.get("memo"));
+                    }
                 } 
                 // flaskResponse의 resultCode가 200일 때 
                 else if("500".equals(jsonObject.get("resultCode"))) {
@@ -179,7 +184,7 @@ public class EmployeeService {
             e.printStackTrace();
             throw e;
         }finally {
-            spanPhase2.finish();
+            // spanPhase2.finish();
         }
 
         logger.info("=====================> [EmployeeService / getEmployeeInfo] response : " + response);
@@ -403,5 +408,29 @@ public class EmployeeService {
         String jsonString = String.valueOf(restResponse.getBody());
         jsonObject = (JSONObject)jsonParser.parse(jsonString);
         return jsonObject;
+    }
+
+
+    /**
+     * @methodName  getLoginInfo
+     * @return      EmployeeDTO.Response
+     * @throws      Exception
+     * @description 로그인 한 Employee의 정보를 가져온다.
+     */
+    public EmployeeDTO.Response getLoginInfo(Integer employee_number) throws Exception{ 
+
+        EmployeeDTO.Response response = new EmployeeDTO.Response();
+
+        try {
+            // employee table에서 데이터를 가져와서 for문을 돌려 employee데이터 response에 담는다.
+            response.setAdmin_yn(repository.selectAdminYN(employee_number));
+
+        }catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+            
+        }
+        
+        return response;
     }
 }

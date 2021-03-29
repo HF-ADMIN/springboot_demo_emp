@@ -40,6 +40,7 @@ public class EmployeeDTO {
         private String address;
         private String sign_up_date;
         private String position;
+        private String admin_yn;
         private String memo;
     }
 
@@ -57,6 +58,7 @@ public class EmployeeDTO {
         private String address;
         private String sign_up_date;
         private String position;
+        private String admin_yn;
         private String resultCode;
         private String memo;
         private List<EmployeeDTO.Response> list;

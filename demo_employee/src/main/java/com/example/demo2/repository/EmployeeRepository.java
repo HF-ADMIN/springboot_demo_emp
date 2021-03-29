@@ -17,11 +17,14 @@ public interface EmployeeRepository extends JpaRepository<EmployeeDAO, Long> {
 
     @Transactional
     @Modifying
-    @Query(nativeQuery = true, value= "update employee set name = :#{#emp.name}, position = :#{#emp.position}, sign_up_date = :#{#emp.sign_up_date} where employee_number = :#{#emp.employee_number}")
+    @Query(nativeQuery = true, value= "update employee set name = :#{#emp.name}, position = :#{#emp.position}, sign_up_date = :#{#emp.sign_up_date}, admin_yn = :#{#emp.admin_yn}  where employee_number = :#{#emp.employee_number}")
     Integer update(@Param("emp") EmployeeDAO emp);
 
     @Transactional
     @Modifying
     @Query(nativeQuery = true, value= "delete from employee where employee_number = :#{#emp.employee_number}")
     Integer deleteEmp(@Param("emp") EmployeeDAO emp);
+
+    @Query(nativeQuery = true, value= "select admin_yn from employee where employee_number = ?1")
+    String selectAdminYN(Integer employee_number);
 }

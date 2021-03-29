@@ -96,4 +96,29 @@ public class EmployeeController{
         }
         return ResponseEntity.ok().body(response);
     }
+
+    /**
+     * @methodName getEmployeesInfo
+     * @param      String
+     * @return     ResponseEntity
+     * @throws     Exception
+     * @description GET Request를 받아서 Employee의 정보를 조회하는 메소드
+     */
+    @RequestMapping(value="/LoginInfo", method=RequestMethod.GET)
+    public ResponseEntity<EmployeeDTO.Response> getLoginInfo(@RequestParam Integer employee_number) throws Exception{
+        EmployeeDTO.Response  responseBody = null;
+        Span parentSpan = null;
+        Span spanPhase1 = null;
+        try {
+            parentSpan = tracer.scopeManager().activeSpan();
+            spanPhase1 = tracer.buildSpan("spanPhase_1").asChildOf(parentSpan).start();
+            spanPhase1.log("                                                SpanPhase1 span log");
+            responseBody = service.getLoginInfo(employee_number);
+        }catch(Exception e) {
+            throw e;
+        }finally {
+            spanPhase1.finish();
+        }
+        return ResponseEntity.ok().body(responseBody);
+    }
 }
